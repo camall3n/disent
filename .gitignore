@@ -137,3 +137,6 @@ logs/
 /data/dataset
 /docs/examples/data
 *.pkl
+.vscode
+checkpoints/
+
