@@ -60,3 +60,6 @@ from disent.dataset.data._groundtruth__xyobject import XYObjectShadedData
 from disent.dataset.data._groundtruth__xysquares import XYSquaresData
 from disent.dataset.data._groundtruth__xysquares import XYSquaresMinimalData
 from disent.dataset.data._groundtruth__xysquares import XYSingleSquareData
+
+# taxi
+from disent.dataset.data._groundtruth__taxi import TaxiData
