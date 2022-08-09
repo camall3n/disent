@@ -97,5 +97,5 @@ def main():
     print('metrics:', metrics)
 
 if __name__ == '__main__':
-    freeze_support()
+    freeze_support() # do this to make sure multiprocessing works correctly
     main()
