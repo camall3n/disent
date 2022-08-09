@@ -1,3 +1,4 @@
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from multiprocessing import freeze_support
 
 import pytorch_lightning as pl
@@ -19,35 +20,51 @@ from disent.model.ae import EncoderConv64, EncoderIdentity
 from disent.schedule import CyclicSchedule
 
 def main():
+    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--oracle', action='store_true',
+        help='Disables observation function and returns ground-truth state instead')
+    parser.add_argument('--model', type=str, default='betavae',
+        choices=['betavae', 'identity', 'markov', 'factored'],
+        help='The type of representation model to evaluate')
+    args = parser.parse_args()
+
     # create the dataset & dataloaders
     # - ToImgTensorF32 transforms images from numpy arrays to tensors and performs checks
     # - if you use `num_workers != 0` in the DataLoader, the make sure to
     #   wrap `trainer.fit` with `if __name__ == '__main__': ...`
-    data = TaxiOracleData()
+    if args.oracle:
+        data = TaxiOracleData()
+    else:
+        data = TaxiData()
     dataset = DisentDataset(dataset=data, sampler=SingleSampler(), transform=ToImgTensorF32())
     dataloader = DataLoader(dataset=dataset, batch_size=128, shuffle=True, num_workers=4)
 
-    # create the BetaVAE model
-    # - adjusting the beta, learning rate, and representation size.
-    # module = BetaVae(
-    #     model=AutoEncoder(
-    #         # z_multiplier is needed to output mu & logvar when parameterising normal distribution
-    #         encoder=EncoderConv64(x_shape=data.x_shape, z_size=10, z_multiplier=2),
-    #         decoder=DecoderConv64(x_shape=data.x_shape, z_size=10),
-    #     ),
-    #     cfg=BetaVae.cfg(
-    #         optimizer='adam',
-    #         optimizer_kwargs=dict(lr=1e-3),
-    #         loss_reduction='mean_sum',
-    #         beta=4,
-    #     )
-    # )
-    module = Ae(
-        model=AutoEncoder(
-            encoder=EncoderIdentity(x_shape=data.x_shape),
-            decoder=DecoderIdentity(x_shape=data.x_shape),
+    if args.model == 'betavae':
+        # create the BetaVAE model
+        # - adjusting the beta, learning rate, and representation size.
+        module = BetaVae(
+            model=AutoEncoder(
+                # z_multiplier is needed to output mu & logvar when parameterising normal distribution
+                encoder=EncoderConv64(x_shape=data.x_shape, z_size=10, z_multiplier=2),
+                decoder=DecoderConv64(x_shape=data.x_shape, z_size=10),
+            ),
+            cfg=BetaVae.cfg(
+                optimizer='adam',
+                optimizer_kwargs=dict(lr=1e-3),
+                loss_reduction='mean_sum',
+                beta=4,
+            )
         )
-    )
+    elif args.model == 'identity':
+        assert args.oracle
+        module = Ae(
+            model=AutoEncoder(
+                encoder=EncoderIdentity(x_shape=data.x_shape),
+                decoder=DecoderIdentity(x_shape=data.x_shape),
+            )
+        )
+    else:
+        raise NotImplementedError()
 
     # cyclic schedule for target 'beta' in the config/cfg. The initial value from the
     # config is saved and multiplied by the ratio from the schedule on each step.
@@ -76,6 +93,7 @@ def main():
     }
 
     # evaluate
+    print('model:', args.model)
     print('metrics:', metrics)
 
 if __name__ == '__main__':
