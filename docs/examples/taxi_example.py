@@ -6,15 +6,16 @@ from torch.utils.data import DataLoader
 
 from disent.dataset import DisentDataset
 from disent.dataset.data import XYObjectData
-from disent.dataset.data import TaxiData
+from disent.dataset.data import TaxiData, TaxiOracleData
 from disent.dataset.sampling import SingleSampler
 from disent.dataset.transform import ToImgTensorF32
 from disent.frameworks.vae import BetaVae
+from disent.frameworks.ae import Ae
 from disent.metrics import metric_dci
 from disent.metrics import metric_mig
 from disent.model import AutoEncoder
-from disent.model.ae import DecoderConv64
-from disent.model.ae import EncoderConv64
+from disent.model.ae import DecoderConv64, DecoderIdentity
+from disent.model.ae import EncoderConv64, EncoderIdentity
 from disent.schedule import CyclicSchedule
 
 def main():
@@ -22,23 +23,29 @@ def main():
     # - ToImgTensorF32 transforms images from numpy arrays to tensors and performs checks
     # - if you use `num_workers != 0` in the DataLoader, the make sure to
     #   wrap `trainer.fit` with `if __name__ == '__main__': ...`
-    data = TaxiData()
+    data = TaxiOracleData()
     dataset = DisentDataset(dataset=data, sampler=SingleSampler(), transform=ToImgTensorF32())
     dataloader = DataLoader(dataset=dataset, batch_size=128, shuffle=True, num_workers=4)
 
     # create the BetaVAE model
     # - adjusting the beta, learning rate, and representation size.
-    module = BetaVae(
+    # module = BetaVae(
+    #     model=AutoEncoder(
+    #         # z_multiplier is needed to output mu & logvar when parameterising normal distribution
+    #         encoder=EncoderConv64(x_shape=data.x_shape, z_size=10, z_multiplier=2),
+    #         decoder=DecoderConv64(x_shape=data.x_shape, z_size=10),
+    #     ),
+    #     cfg=BetaVae.cfg(
+    #         optimizer='adam',
+    #         optimizer_kwargs=dict(lr=1e-3),
+    #         loss_reduction='mean_sum',
+    #         beta=4,
+    #     )
+    # )
+    module = Ae(
         model=AutoEncoder(
-            # z_multiplier is needed to output mu & logvar when parameterising normal distribution
-            encoder=EncoderConv64(x_shape=data.x_shape, z_size=10, z_multiplier=2),
-            decoder=DecoderConv64(x_shape=data.x_shape, z_size=10),
-        ),
-        cfg=BetaVae.cfg(
-            optimizer='adam',
-            optimizer_kwargs=dict(lr=1e-3),
-            loss_reduction='mean_sum',
-            beta=4,
+            encoder=EncoderIdentity(x_shape=data.x_shape),
+            decoder=DecoderIdentity(x_shape=data.x_shape),
         )
     )
 
