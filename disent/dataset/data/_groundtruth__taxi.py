@@ -135,6 +135,24 @@ class TaxiData(GroundTruthData):
 
         return image.astype(np.float32)
 
+
+class TaxiOracleData(TaxiData):
+    @property
+    def factor_sizes(self) -> Tuple[int, ...]:
+        return 5, 5, 5, 5, 2, 4
+
+    @property
+    def img_shape(self) -> Tuple[int, ...]:
+        return 6, 1, 1
+
+    def _get_observation(self, idx):
+        state = self.idx_to_pos(idx)
+        obs = np.asarray(state).reshape(self.img_shape).astype(np.float32)
+        return obs
+
+    def render(self, *args):
+        raise NotImplementedError("TaxiOracleData does not use render function")
+
 # ========================================================================= #
 # END                                                                       #
 # ========================================================================= #
