@@ -55,6 +55,22 @@ def main():
                 beta=4,
             )
         )
+        # cyclic schedule for target 'beta' in the config/cfg. The initial value from the
+        # config is saved and multiplied by the ratio from the schedule on each step.
+        # - based on: https://arxiv.org/abs/1903.10145
+        module.register_schedule(
+            'beta', CyclicSchedule(
+                period=1024,  # repeat every: trainer.global_step % period
+            )
+        )
+
+        # train model
+        # - for 2048 batches/steps
+        trainer = pl.Trainer(
+            max_steps=2048, gpus=1 if torch.cuda.is_available() else None, logger=False
+        )
+        trainer.fit(module, dataloader)
+
     elif args.model == 'identity':
         assert args.oracle
         module = Ae(
@@ -65,22 +81,6 @@ def main():
         )
     else:
         raise NotImplementedError()
-
-    # cyclic schedule for target 'beta' in the config/cfg. The initial value from the
-    # config is saved and multiplied by the ratio from the schedule on each step.
-    # - based on: https://arxiv.org/abs/1903.10145
-    module.register_schedule(
-        'beta', CyclicSchedule(
-            period=1024,  # repeat every: trainer.global_step % period
-        )
-    )
-
-    # train model
-    # - for 2048 batches/steps
-    trainer = pl.Trainer(
-        max_steps=2048, gpus=1 if torch.cuda.is_available() else None, logger=False
-    )
-    trainer.fit(module, dataloader)
 
     # compute disentanglement metrics
     # - we cannot guarantee which device the representation is on
