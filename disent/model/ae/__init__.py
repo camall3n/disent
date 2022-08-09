@@ -31,3 +31,5 @@ from disent.model.ae._vae_fc import DecoderFC
 from disent.model.ae._vae_fc import EncoderFC
 from disent.model.ae._linear import DecoderLinear
 from disent.model.ae._linear import EncoderLinear
+from disent.model.ae._identity import DecoderIdentity
+from disent.model.ae._identity import EncoderIdentity
