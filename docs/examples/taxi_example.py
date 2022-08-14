@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 from disent.dataset import DisentDataset
 from disent.dataset.data import XYObjectData
-from disent.dataset.data import TaxiData, TaxiOracleData
+from disent.dataset.data import TaxiData64x64, TaxiData84x84, TaxiOracleData
 from disent.dataset.sampling import SingleSampler
 from disent.dataset.transform import ToImgTensorF32
 from disent.frameworks.vae import BetaVae
@@ -18,6 +18,7 @@ from disent.model import AutoEncoder
 from disent.model.ae import DecoderConv64, DecoderIdentity
 from disent.model.ae import EncoderConv64, EncoderIdentity
 from disent.schedule import CyclicSchedule
+from disent.frameworks.markov import MarkovAbstraction
 
 def main():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
@@ -34,8 +35,10 @@ def main():
     #   wrap `trainer.fit` with `if __name__ == '__main__': ...`
     if args.oracle:
         data = TaxiOracleData()
+    elif args.model == 'markov':
+        data = TaxiData84x84()
     else:
-        data = TaxiData()
+        data = TaxiData64x64()
     dataset = DisentDataset(dataset=data, sampler=SingleSampler(), transform=ToImgTensorF32())
     dataloader = DataLoader(dataset=dataset, batch_size=128, shuffle=True, num_workers=4)
 
@@ -79,6 +82,9 @@ def main():
                 decoder=DecoderIdentity(x_shape=data.x_shape),
             )
         )
+    elif args.model == 'markov':
+        # Load pre-trained Markov abstraction
+        module = MarkovAbstraction(x_shape=data.x_shape)
     else:
         raise NotImplementedError()
 

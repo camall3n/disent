@@ -62,4 +62,4 @@ from disent.dataset.data._groundtruth__xysquares import XYSquaresMinimalData
 from disent.dataset.data._groundtruth__xysquares import XYSingleSquareData
 
 # taxi
-from disent.dataset.data._groundtruth__taxi import TaxiData, TaxiOracleData
+from disent.dataset.data._groundtruth__taxi import TaxiData64x64, TaxiData84x84, TaxiOracleData

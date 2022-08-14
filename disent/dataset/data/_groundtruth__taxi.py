@@ -47,10 +47,6 @@ class TaxiData(GroundTruthData):
     def factor_sizes(self) -> Tuple[int, ...]:
         return 5, 5, 5, 5, 2, 4
 
-    @property
-    def img_shape(self) -> Tuple[int, ...]:
-        return 64, 64, (3 if self._rgb else 1)
-
     def __init__(self, rgb: bool = True, transform=None):
         self._rgb = rgb
         self._grid = np.ones([self._rows * 2 + 1, self._cols * 2 + 1], dtype=int)
@@ -75,12 +71,12 @@ class TaxiData(GroundTruthData):
         return obs
 
     def render(self, taxi_row, taxi_col, psgr_row, psgr_col, in_taxi, goal_idx):
-        wall_width = 1 #2
-        cell_width = 11 #13
-        passenger_width = 7 #9
-        depot_width = 2 #3
-        banner_widths = (2, 1) # (4, 3)
-        dash_widths = (4, 4) # (6, 6)
+        wall_width =  self.wall_width
+        cell_width = self.cell_width
+        passenger_width = self.passenger_width
+        depot_width =  self.depot_width
+        banner_widths =  self.banner_widths
+        dash_widths =  self.dash_widths
         img_width = self._cols * cell_width + (self._cols + 1) * wall_width + sum(banner_widths)
         img_height = self._rows * cell_width + (self._rows + 1) * wall_width + sum(banner_widths)
         img_shape = (img_height, img_width)
@@ -135,12 +131,32 @@ class TaxiData(GroundTruthData):
 
         return image.astype(np.float32)
 
+class TaxiData64x64(TaxiData):
+    wall_width = 1
+    cell_width = 11
+    passenger_width = 7
+    depot_width = 2
+    banner_widths = (2, 1)
+    dash_widths = (4, 4)
+
+    @property
+    def img_shape(self) -> Tuple[int, ...]:
+        return 64, 64, (3 if self._rgb else 1)
+
+class TaxiData84x84(TaxiData):
+    wall_width = 2
+    cell_width = 13
+    passenger_width = 9
+    depot_width = 3
+    banner_widths = (4, 3)
+    dash_widths = (6, 6)
+
+    @property
+    def img_shape(self) -> Tuple[int, ...]:
+        return 84, 84, (3 if self._rgb else 1)
+
 
 class TaxiOracleData(TaxiData):
-    @property
-    def factor_sizes(self) -> Tuple[int, ...]:
-        return 5, 5, 5, 5, 2, 4
-
     @property
     def img_shape(self) -> Tuple[int, ...]:
         return 6, 1, 1
