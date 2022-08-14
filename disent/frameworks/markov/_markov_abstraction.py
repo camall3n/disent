@@ -22,6 +22,7 @@ class MarkovAbstraction(Network):
         with open(args_filename, 'r') as args_file:
             markov_args = eval(args_file.read())
 
+        self.latent_dims = markov_args.latent_dims
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print('device: {}'.format(self.device))
 

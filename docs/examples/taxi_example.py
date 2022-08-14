@@ -19,6 +19,7 @@ from disent.model.ae import DecoderConv64, DecoderIdentity
 from disent.model.ae import EncoderConv64, EncoderIdentity
 from disent.schedule import CyclicSchedule
 from disent.frameworks.markov import MarkovAbstraction
+from disent.frameworks.factored import FactoredModel
 
 def main():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
@@ -27,6 +28,7 @@ def main():
     parser.add_argument('--model', type=str, default='betavae',
         choices=['betavae', 'identity', 'markov', 'factored'],
         help='The type of representation model to evaluate')
+    parser.add_argument('--seed', type=int, default=1)
     args = parser.parse_args()
 
     # create the dataset & dataloaders
@@ -35,7 +37,7 @@ def main():
     #   wrap `trainer.fit` with `if __name__ == '__main__': ...`
     if args.oracle:
         data = TaxiOracleData()
-    elif args.model == 'markov':
+    elif args.model in ['markov', 'factored']:
         data = TaxiData84x84()
     else:
         data = TaxiData64x64()
@@ -85,6 +87,9 @@ def main():
     elif args.model == 'markov':
         # Load pre-trained Markov abstraction
         module = MarkovAbstraction(x_shape=data.x_shape)
+    elif args.model == 'factored':
+        # Load pre-trained Markov abstraction + factored autoenc
+        module = FactoredModel(x_shape=data.x_shape, seed=args.seed)
     else:
         raise NotImplementedError()
 
