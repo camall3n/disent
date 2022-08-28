@@ -111,26 +111,6 @@ class ConstrainedStateSpace(StateSpace):
     # Sampling Functions - any dim array, only last axis counts!            #
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
-    def sample_factors(self, size=None, f_idxs: Optional[NonNormalisedFactorIdxs] = None) -> np.ndarray:
-        raise NotImplementedError(f'sample_factors not implemented for constrained state spaces')
-
-    def sample_missing_factors(self, known_factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
-        raise NotImplementedError(f'sample_missing_factors not implemented for constrained state spaces')
-
-    def resample_other_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
-        raise NotImplementedError(f'resample_other_factors not implemented for constrained state spaces')
-
-    def resample_given_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs):
-        raise NotImplementedError(f'resample_given_factors not implemented for constrained state spaces')
-
-    def _get_f_idx_and_factors_and_size(
-        self,
-        f_idx: Optional[int] = None,
-        base_factors: Optional[NonNormalisedFactors] = None,
-        num: Optional[int] = None,
-    ):
-        raise NotImplementedError(f'_get_f_idx_and_factors_and_size not implemented for constrained state spaces')
-
     def sample_random_factor_traversal(
         self,
         f_idx: Optional[int] = None,
