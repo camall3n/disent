@@ -39,6 +39,7 @@ from disent.dataset.util.datafile import DataFile
 from disent.dataset.util.datafile import DataFileHashedDlH5
 from disent.dataset.data._raw import Hdf5Dataset
 from disent.dataset.util.state_space import StateSpace
+from disent.dataset.util.constrained_state_space import ConstrainedStateSpace
 from disent.util.inout.paths import ensure_dir_exists
 
 
@@ -49,18 +50,10 @@ log = logging.getLogger(__name__)
 # ground truth data                                                         #
 # ========================================================================= #
 
-
-class GroundTruthData(Dataset, StateSpace):
+class BaseGroundTruthData(Dataset):
     """
-    Dataset that corresponds to some state space or ground truth factors
+    Base class for datasets that correspond to some state space or ground truth factors
     """
-
-    def __init__(self, transform=None):
-        self._transform = transform
-        super().__init__(
-            factor_sizes=self.factor_sizes,
-            factor_names=self.factor_names,
-        )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Overridable Defaults                                                  #
@@ -84,15 +77,6 @@ class GroundTruthData(Dataset, StateSpace):
     @property
     def factor_sizes(self) -> Tuple[int, ...]:
         raise NotImplementedError()
-
-    def state_space_copy(self) -> StateSpace:
-        """
-        :return: Copy this ground truth dataset as a StateSpace, discarding everything else!
-        """
-        return StateSpace(
-            factor_sizes=self.factor_sizes,
-            factor_names=self.factor_names,
-        )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Properties                                                            #
@@ -146,6 +130,53 @@ class GroundTruthData(Dataset, StateSpace):
             obs = obs_collect_fn(obs)
         return factors, indices, obs
 
+
+class GroundTruthData(BaseGroundTruthData, StateSpace):
+    """
+    Dataset that corresponds to some state space or ground truth factors
+    """
+
+    def __init__(self, transform=None):
+        self._transform = transform
+        super().__init__(
+            factor_sizes=self.factor_sizes,
+            factor_names=self.factor_names,
+        )
+
+    def state_space_copy(self) -> StateSpace:
+        """
+        :return: Copy this ground truth dataset as a StateSpace, discarding everything else!
+        """
+        return StateSpace(
+            factor_sizes=self.factor_sizes,
+            factor_names=self.factor_names,
+        )
+
+# ========================================================================= #
+# constrained ground truth data                                             #
+# ========================================================================= #
+
+class ConstrainedGroundTruthData(BaseGroundTruthData, ConstrainedStateSpace):
+    """
+    Dataset that corresponds to some state space or ground truth factors
+    """
+
+    def __init__(self, transform=None):
+        self._transform = transform
+        super().__init__(
+            factor_sizes=self.factor_sizes,
+            factor_names=self.factor_names
+        )
+
+    def state_space_copy(self) -> ConstrainedStateSpace:
+        """
+        :return: Copy this ground truth dataset as a ConstrainedStateSpace,
+                 discarding everything else!
+        """
+        return ConstrainedStateSpace(
+            factor_sizes=self.factor_sizes,
+            factor_names=self.factor_names,
+        )
 
 # ========================================================================= #
 # Basic Array Ground Truth Dataset                                          #

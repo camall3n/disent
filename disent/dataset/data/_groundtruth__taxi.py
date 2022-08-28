@@ -6,7 +6,7 @@ from typing import Tuple
 import numpy as np
 import matplotlib.colors as colors
 
-from disent.dataset.data._groundtruth import GroundTruthData
+from disent.dataset.data._groundtruth import ConstrainedGroundTruthData
 
 
 class Depot:
@@ -20,7 +20,7 @@ class Depot:
         super().__setattr__(name, value)
 
 
-class TaxiData(GroundTruthData):
+class TaxiData(ConstrainedGroundTruthData):
     """
     Dataset that generates all possible taxi & passenger positions,
     in-taxi flag settings, and goal locations
@@ -64,6 +64,14 @@ class TaxiData(GroundTruthData):
             self.depots[name].position = self._depot_locs[name]
 
         super().__init__(transform=transform)
+
+    def _is_valid_pos(self, pos):
+        taxi_row, taxi_col, psgr_row, psgr_col, in_taxi, goal_idx = pos
+        if not in_taxi:
+            return True
+        elif (taxi_row == psgr_row) and (taxi_col == psgr_col):
+            return True
+        return False
 
     def _get_observation(self, idx):
         state = self.idx_to_pos(idx)
