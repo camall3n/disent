@@ -42,7 +42,7 @@ def main():
     else:
         data = TaxiData64x64()
     dataset = DisentDataset(dataset=data, sampler=SingleSampler(), transform=ToImgTensorF32())
-    dataloader = DataLoader(dataset=dataset, batch_size=128, shuffle=True, num_workers=4)
+    dataloader = DataLoader(dataset=dataset, batch_size=128, shuffle=True, num_workers=0)
 
     if args.model == 'betavae':
         # create the BetaVAE model

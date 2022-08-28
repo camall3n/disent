@@ -58,7 +58,7 @@ class ConstrainedStateSpace(StateSpace):
 
     def _constrain_indices(self):
         def is_valid_idx(idx):
-            return self._is_valid_pos(super().idx_to_pos(idx))
+            return self._is_valid_pos(super(ConstrainedStateSpace, self).idx_to_pos(idx))
         self.valid_orig_indices = [idx for idx in range(len(self)) if is_valid_idx(idx)]
         self.constrained_indices = {
             orig: new for new, orig in enumerate(self.valid_orig_indices)
@@ -80,11 +80,17 @@ class ConstrainedStateSpace(StateSpace):
         Check that the supplied position(s) satisfy the constraints, apply original factor
         conversion math to obtain indices, then convert to constrained indices
         """
+        is_list = isinstance(positions, list)
+        if not is_list:
+            positions = [positions]
         for pos in positions:
             if not self._is_valid_pos(pos):
                 raise ValueError(f'{pos} is not a valid position in the constrained state space')
         orig_indices = super().pos_to_idx(positions)
-        return [self.constrained_indices[idx] for idx in orig_indices]
+        indices = [self.constrained_indices[idx] for idx in orig_indices]
+        if not is_list:
+            indices = indices[0]
+        return indices
 
 
     def idx_to_pos(self, indices) -> np.ndarray:
@@ -92,8 +98,14 @@ class ConstrainedStateSpace(StateSpace):
         Convert constrained index/indices to original index/indices, then apply original
         factor conversion math to obtain position(s)
         """
+        is_list = isinstance(indices, list)
+        if not is_list:
+            indices = [indices]
         orig_indices = [self.valid_orig_indices[idx] for idx in indices]
-        return super().idx_to_pos(orig_indices)
+        positions = super().idx_to_pos(orig_indices)
+        if not is_list:
+            positions = positions[0]
+        return positions
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Sampling Functions - any dim array, only last axis counts!            #
