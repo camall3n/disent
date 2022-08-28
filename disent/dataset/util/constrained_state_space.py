@@ -63,7 +63,7 @@ class ConstrainedStateSpace(StateSpace):
         self.constrained_indices = {
             orig: new for new, orig in enumerate(self.valid_orig_indices)
         }
-        self.__size = len(self.valid_orig_indices)
+        self._size = len(self.valid_orig_indices)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Overrides                                                             #

@@ -68,7 +68,7 @@ class StateSpace(LengthIter):
         self.__factor_multipliers = _dims_multipliers(self.__factor_sizes)
         self.__factor_multipliers.flags.writeable = False
         # total permutations
-        self.__size = int(np.prod(factor_sizes))
+        self._size = int(np.prod(factor_sizes))
         # factor names
         self.__factor_names = tuple(f'f{i}' for i in range(self.num_factors)) if (factor_names is None) else tuple(factor_names)
         if len(self.__factor_names) != len(self.__factor_sizes):
@@ -89,7 +89,7 @@ class StateSpace(LengthIter):
     @property
     def size(self) -> int:
         """The number of permutations of factors handled by this state space"""
-        return self.__size
+        return self._size
 
     @property
     def num_factors(self) -> int:
