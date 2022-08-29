@@ -57,22 +57,22 @@ class StateSpace(LengthIter):
     def __init__(self, factor_sizes: Sequence[int], factor_names: Optional[Sequence[str]] = None):
         super().__init__()
         # dimension: [read only]
-        self.__factor_sizes = np.array(factor_sizes)
-        self.__factor_sizes.flags.writeable = False
+        self._factor_sizes = np.array(factor_sizes)
+        self._factor_sizes.flags.writeable = False
         # checks
-        if self.__factor_sizes.ndim != 1:
-            raise ValueError(f'`factor_sizes` must be an array with only one dimension, got shape: {self.__factor_sizes.shape}')
-        if len(self.__factor_sizes) <= 0:
-            raise ValueError(f'`factor_sizes` must be non-empty, got shape: {self.__factor_sizes.shape}')
+        if self._factor_sizes.ndim != 1:
+            raise ValueError(f'`factor_sizes` must be an array with only one dimension, got shape: {self._factor_sizes.shape}')
+        if len(self._factor_sizes) <= 0:
+            raise ValueError(f'`factor_sizes` must be non-empty, got shape: {self._factor_sizes.shape}')
         # multipliers: [read only]
-        self.__factor_multipliers = _dims_multipliers(self.__factor_sizes)
+        self.__factor_multipliers = _dims_multipliers(self._factor_sizes)
         self.__factor_multipliers.flags.writeable = False
         # total permutations
         self._size = int(np.prod(factor_sizes))
         # factor names
         self.__factor_names = tuple(f'f{i}' for i in range(self.num_factors)) if (factor_names is None) else tuple(factor_names)
-        if len(self.__factor_names) != len(self.__factor_sizes):
-            raise ValueError(f'Dimensionality mismatch of factor_names and factor_sizes: len({self.__factor_names}) != len({tuple(self.__factor_sizes)})')
+        if len(self.__factor_names) != len(self._factor_sizes):
+            raise ValueError(f'Dimensionality mismatch of factor_names and factor_sizes: len({self.__factor_names}) != len({tuple(self._factor_sizes)})')
 
     def __len__(self):
         """Same as self.size"""
@@ -94,12 +94,12 @@ class StateSpace(LengthIter):
     @property
     def num_factors(self) -> int:
         """The number of factors handled by this state space"""
-        return len(self.__factor_sizes)
+        return len(self._factor_sizes)
 
     @property
     def factor_sizes(self) -> np.ndarray:
         """A list of sizes or dimensionality of factors handled by this state space"""
-        return self.__factor_sizes
+        return self._factor_sizes
 
     @property
     def factor_names(self) -> Tuple[str, ...]:
@@ -174,7 +174,7 @@ class StateSpace(LengthIter):
         TODO: can factor_multipliers be used to speed this up?
         """
         positions = np.moveaxis(positions, source=-1, destination=0)
-        return np.ravel_multi_index(positions, self.__factor_sizes)
+        return np.ravel_multi_index(positions, self._factor_sizes)
 
     def idx_to_pos(self, indices) -> np.ndarray:
         """
@@ -184,7 +184,7 @@ class StateSpace(LengthIter):
 
         TODO: can factor_multipliers be used to speed this up?
         """
-        positions = np.array(np.unravel_index(indices, self.__factor_sizes))
+        positions = np.array(np.unravel_index(indices, self._factor_sizes))
         return np.moveaxis(positions, source=0, destination=-1)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -195,8 +195,8 @@ class StateSpace(LengthIter):
         base_factors = list(base_factors)
         base_factors[f_idx] = 0
         base_idx = self.pos_to_idx(base_factors)
-        step_size = _get_step_size(tuple(self.__factor_sizes), f_idx)
-        yield from range(base_idx, base_idx + step_size * self.__factor_sizes[f_idx], step_size)
+        step_size = _get_step_size(tuple(self._factor_sizes), f_idx)
+        yield from range(base_idx, base_idx + step_size * self._factor_sizes[f_idx], step_size)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Sampling Functions - any dim array, only last axis counts!            #
@@ -217,9 +217,9 @@ class StateSpace(LengthIter):
         """
         # get factor sizes
         if f_idxs is None:
-            f_sizes = self.__factor_sizes
+            f_sizes = self._factor_sizes
         else:
-            f_sizes = self.__factor_sizes[self.normalise_factor_idxs(f_idxs)]  # this may be quite slow, add caching?
+            f_sizes = self._factor_sizes[self.normalise_factor_idxs(f_idxs)]  # this may be quite slow, add caching?
         # get resample size
         if size is not None:
             # empty np.array(()) gets dtype float which is incompatible with len

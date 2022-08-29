@@ -186,8 +186,8 @@ class ConstrainedGroundTruthData(BaseGroundTruthData, ConstrainedStateSpace):
 class ArrayGroundTruthData(GroundTruthData):
 
     def __init__(self, array, factor_names: Tuple[str, ...], factor_sizes: Tuple[int, ...], array_chn_is_last: bool = True, x_shape: Optional[Tuple[int, ...]] = None, transform=None):
-        self.__factor_names = tuple(factor_names)
-        self.__factor_sizes = tuple(factor_sizes)
+        self._factor_names = tuple(factor_names)
+        self._factor_sizes = tuple(factor_sizes)
         self._array = array
         # get shape
         if x_shape is not None:
@@ -213,7 +213,7 @@ class ArrayGroundTruthData(GroundTruthData):
 
     @property
     def factor_sizes(self) -> Tuple[int, ...]:
-        return self.__factor_sizes
+        return self._factor_sizes
 
     @property
     def img_shape(self) -> Tuple[int, ...]:
