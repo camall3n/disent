@@ -118,6 +118,8 @@ class ConstrainedStateSpace(StateSpace):
         sample randomly from all factors, otherwise the given factor_indices.
         returned values must appear in the same order as factor_indices.
 
+        Uses rejection sampling to ensure constraints are satisfied.
+
         If factor factor_indices is None, all factors are sampled.
         If size=None then the array returned is the same shape as (len(factor_indices),) or factor_sizes[factor_indices]
         If size is an integer or shape, the samples returned are that shape with the last dimension
