@@ -80,15 +80,15 @@ class ConstrainedStateSpace(StateSpace):
         Check that the supplied position(s) satisfy the constraints, apply original factor
         conversion math to obtain indices, then convert to constrained indices
         """
-        is_list = isinstance(positions, list)
-        if not is_list:
-            positions = [positions]
+        is_batch = (positions.ndim == 2)
+        if not is_batch:
+            positions = np.expand_dims(positions,0)
         for pos in positions:
             if not self._is_valid_pos(pos):
                 raise ValueError(f'{pos} is not a valid position in the constrained state space')
         orig_indices = super().pos_to_idx(positions)
         indices = [self.constrained_indices[idx] for idx in orig_indices]
-        if not is_list:
+        if not is_batch:
             indices = indices[0]
         return indices
 
