@@ -55,6 +55,13 @@ class BaseGroundTruthData(Dataset):
     Base class for datasets that correspond to some state space or ground truth factors
     """
 
+    def __init__(self, transform=None):
+        self._transform = transform
+        super().__init__(
+            factor_sizes=self.factor_sizes,
+            factor_names=self.factor_names,
+        )
+
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Overridable Defaults                                                  #
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
@@ -136,13 +143,6 @@ class GroundTruthData(BaseGroundTruthData, StateSpace):
     Dataset that corresponds to some state space or ground truth factors
     """
 
-    def __init__(self, transform=None):
-        self._transform = transform
-        super().__init__(
-            factor_sizes=self.factor_sizes,
-            factor_names=self.factor_names,
-        )
-
     def state_space_copy(self) -> StateSpace:
         """
         :return: Copy this ground truth dataset as a StateSpace, discarding everything else!
@@ -160,13 +160,6 @@ class ConstrainedGroundTruthData(BaseGroundTruthData, ConstrainedStateSpace):
     """
     Dataset that corresponds to some state space or ground truth factors
     """
-
-    def __init__(self, transform=None):
-        self._transform = transform
-        super().__init__(
-            factor_sizes=self.factor_sizes,
-            factor_names=self.factor_names
-        )
 
     def state_space_copy(self) -> ConstrainedStateSpace:
         """
