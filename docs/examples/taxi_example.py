@@ -29,7 +29,10 @@ def main():
         choices=['betavae', 'identity', 'markov', 'factored'],
         help='The type of representation model to evaluate')
     parser.add_argument('--seed', type=int, default=1)
-    args = parser.parse_args()
+    parser.add_argument('--tag', type=str, default=None)
+    args, _ = parser.parse_known_args()
+
+    print(args.tag)
 
     # create the dataset & dataloaders
     # - ToImgTensorF32 transforms images from numpy arrays to tensors and performs checks
@@ -89,7 +92,8 @@ def main():
         module = MarkovAbstraction(x_shape=data.x_shape)
     elif args.model == 'factored':
         # Load pre-trained Markov abstraction + factored autoenc
-        module = FactoredModel(x_shape=data.x_shape, seed=args.seed)
+        assert args.tag is not None
+        module = FactoredModel(x_shape=data.x_shape, seed=args.seed, tag=args.tag)
     else:
         raise NotImplementedError()
 

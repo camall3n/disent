@@ -9,12 +9,20 @@ from ..markov import MarkovAbstraction
 from .cae import CAENet
 
 class FactoredModel(Network):
-    def __init__(self, x_shape, seed):
+    def __init__(self, x_shape, seed, tag):
         super().__init__()
 
         self.markov = MarkovAbstraction(x_shape)
 
-        tag = 'exp21-cae-best__lr_0.001__Lrecz_0.1__distmode_mse__Lfoc_0.003__latentdims_10__Lrecxaug_0.0'
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_0.1__distmode_mse__Lfoc_0.003__latentdims_10__Lrecxaug_0.0'
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_0.1__distmode_mse__Lfoc_0.003__latentdims_10__Lrecxaug_1.0'
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_0.1__distmode_mse__Lfoc_0.0__latentdims_10__Lrecxaug_0.0' ##
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_0.1__distmode_mse__Lfoc_0.0__latentdims_10__Lrecxaug_1.0'
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_1.0__distmode_mse__Lfoc_0.003__latentdims_10__Lrecxaug_0.0'
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_1.0__distmode_mse__Lfoc_0.003__latentdims_10__Lrecxaug_1.0'
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_1.0__distmode_mse__Lfoc_0.0__latentdims_10__Lrecxaug_0.0'  ##
+        # tag = 'exp21-cae-best__lr_0.001__Lrecz_1.0__distmode_mse__Lfoc_0.0__latentdims_10__Lrecxaug_1.0'
+
         prefix = '~/data-gdk/csal/factored/' if platform.system() == 'Linux' else '~/dev/factored-reps/'
         expanded_prefix = os.path.expanduser(prefix)
         results_dir = expanded_prefix + 'results/'
