@@ -129,6 +129,7 @@ class ConstrainedStateSpace(StateSpace):
         if f_idxs is None:
             f_sizes = self._factor_sizes
         else:
+            raise NotImplementedError('f_idxs is not supported in constrained state spaces')
             f_sizes = self._factor_sizes[self.normalise_factor_idxs(f_idxs)]  # this may be quite slow, add caching?
         # get resample size
         if size is not None:
@@ -165,6 +166,8 @@ class ConstrainedStateSpace(StateSpace):
 
         return samples
 
+    def sample_missing_factors(self, known_factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
+        raise NotImplementedError('sample_missing_factors not supported for ConstrainedStateSpace')
 
     def sample_random_factor_traversal(
         self,
