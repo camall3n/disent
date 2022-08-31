@@ -168,6 +168,10 @@ class ConstrainedStateSpace(StateSpace):
 
     def sample_missing_factors(self, known_factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
         raise NotImplementedError('sample_missing_factors not supported for ConstrainedStateSpace')
+    def resample_other_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
+        raise NotImplementedError('resample_other_factors not supported for ConstrainedStateSpace')
+    def resample_given_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs):
+        raise NotImplementedError('resample_given_factors not supported for ConstrainedStateSpace')
 
     def sample_random_factor_traversal(
         self,
