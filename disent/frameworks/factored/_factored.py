@@ -4,9 +4,9 @@ import os
 import platform
 import torch
 
-from ..markov.nnutils import Network
+from markov_abstr.gridworld.models.nnutils import Network
+from factored_reps.models.cae import CAENet
 from ..markov import MarkovAbstraction
-from .cae import CAENet
 
 class FactoredModel(Network):
     def __init__(self, x_shape, seed, tag):
