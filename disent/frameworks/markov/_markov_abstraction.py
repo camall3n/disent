@@ -4,8 +4,8 @@ import os
 import platform
 import torch
 
-from factored_reps.models.nnutils import Network
-from factored_reps.models.markov.featurenet import FeatureNet
+from factored_rl.models.nnutils import Network
+from factored_rl.models.markov.featurenet import FeatureNet
 
 class MarkovAbstraction(Network):
     def __init__(self, x_shape):

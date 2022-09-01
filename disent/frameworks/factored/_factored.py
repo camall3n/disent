@@ -4,8 +4,8 @@ import os
 import platform
 import torch
 
-from factored_reps.models.nnutils import Network
-from factored_reps.models.factored.cae import CAENet
+from factored_rl.models.nnutils import Network
+from factored_rl.models.factored.cae import CAENet
 from ..markov import MarkovAbstraction
 
 class FactoredModel(Network):
