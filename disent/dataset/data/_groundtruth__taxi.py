@@ -6,9 +6,8 @@ from typing import Tuple
 import numpy as np
 
 from disent.dataset.data._groundtruth import ConstrainedGroundTruthData
-from visgrid.taxi.taxi import BaseTaxi as TaxiEnv
+from visgrid.taxi.taxi import Taxi5x5
 from visgrid.gridworld.objects.passenger import Passenger
-from visgrid.gridworld.objects.depot import Depot
 from visgrid.gridworld.objects.agent import Agent as TaxiAgent
 
 class TaxiData(ConstrainedGroundTruthData):
@@ -24,36 +23,15 @@ class TaxiData(ConstrainedGroundTruthData):
     factor_names = ('taxi_row', 'taxi_col', 'passenger_row', 'passenger_col', 'in_taxi',
                     'goal_idx')
 
-    _depot_locs = {# yapf: disable
-        'red':    (0, 0),
-        'yellow': (4, 0),
-        'blue':   (4, 3),
-        'green':  (0, 4),
-    }# yapf: enable
-    _depot_names = list(_depot_locs.keys())
-
-    _rows = 5
-    _cols = 5
-
     @property
     def factor_sizes(self) -> Tuple[int, ...]:
         return 5, 5, 5, 5, 2, 4
 
     def __init__(self, rgb: bool = True, transform=None):
         self._rgb = rgb
-        self._grid = np.ones([self._rows * 2 + 1, self._cols * 2 + 1], dtype=int)
-        # Reset valid positions and walls
-        self._grid[1:-1:2, 1:-1] = 0
-        self._grid[1:-1, 1:-1:2] = 0
-        self._grid[1:4, 4] = 1
-        self._grid[7:10, 2] = 1
-        self._grid[7:10, 6] = 1
-
-        # Place depots
-        self.depots = dict()
-        for name in self._depot_names:
-            self.depots[name] = Depot(color=name)
-            self.depots[name].position = self._depot_locs[name]
+        self.env = Taxi5x5()
+        self.depots = self.env.depots
+        self.depot_names = sorted(list(self.depots.keys()))
 
         super().__init__(transform=transform)
 
@@ -70,13 +48,13 @@ class TaxiData(ConstrainedGroundTruthData):
         taxi_row, taxi_col, psgr_row, psgr_col, in_taxi, goal_idx = state
         taxi = TaxiAgent(position=(taxi_row, taxi_col))
         passenger = Passenger(position=(psgr_row, psgr_col))
-        passenger.color = self._depot_names[goal_idx]
+        passenger.color = self.depots[self.depot_names[goal_idx]].color
         passenger.goal = passenger.color
         passenger.in_taxi = in_taxi
 
-        img_height = (self._rows * self.cell_width + (self._rows + 1) * self.wall_width +
+        img_height = (self.env._rows * self.cell_width + (self.env._rows + 1) * self.wall_width +
                       sum(self.banner_widths))
-        img_width = (self._cols * self.cell_width + (self._cols + 1) * self.wall_width +
+        img_width = (self.env._cols * self.cell_width + (self.env._cols + 1) * self.wall_width +
                      sum(self.banner_widths))
 
         dims = {
@@ -89,7 +67,7 @@ class TaxiData(ConstrainedGroundTruthData):
             'img_shape': (img_height, img_width)
         }
 
-        obs = TaxiEnv._render(self._grid, taxi, [passenger], self.depots, dims)
+        obs = self.env._render(self.env._grid, taxi, [passenger], self.depots, dims)
 
         if (not self._rgb):
             obs = np.mean(obs, axis=-1, keepdims=True)
