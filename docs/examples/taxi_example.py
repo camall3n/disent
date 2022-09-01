@@ -23,17 +23,15 @@ from disent.frameworks.factored import FactoredModel
 
 def main():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument(
-        '--oracle',
-        action='store_true',
+    # yapf: disable
+    parser.add_argument('--oracle', action='store_true',
         help='Disables observation function and returns ground-truth state instead')
-    parser.add_argument('--model',
-                        type=str,
-                        default='betavae',
-                        choices=['betavae', 'identity', 'markov', 'factored'],
-                        help='The type of representation model to evaluate')
+    parser.add_argument('--model', type=str, default='betavae',
+        choices=['betavae', 'identity', 'markov', 'factored'],
+        help='The type of representation model to evaluate')
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--tag', type=str, default=None)
+    # yapf: enable
     args, _ = parser.parse_known_args()
 
     if args.tag is not None:
@@ -77,7 +75,7 @@ def main():
         module.register_schedule(
             'beta',
             CyclicSchedule(
-                period=1024,  # repeat every: trainer.global_step % period
+                period=1024, # repeat every: trainer.global_step % period
             ))
 
         # train model
@@ -118,5 +116,5 @@ def main():
     print('metrics:', metrics)
 
 if __name__ == '__main__':
-    freeze_support()  # do this to make sure multiprocessing works correctly
+    freeze_support() # do this to make sure multiprocessing works correctly
     main()
