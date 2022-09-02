@@ -6,9 +6,9 @@ from typing import Tuple
 import numpy as np
 
 from disent.dataset.data._groundtruth import ConstrainedGroundTruthData
-from visgrid.taxi.taxi import Taxi5x5
-from visgrid.gridworld.objects.passenger import Passenger
-from visgrid.gridworld.objects.agent import Agent as TaxiAgent
+from visgrid.envs.taxi import Taxi5x5
+from visgrid.envs.components.passenger import Passenger
+from visgrid.envs.components.agent import Agent as TaxiObj
 
 class TaxiData(ConstrainedGroundTruthData):
     """
@@ -46,7 +46,7 @@ class TaxiData(ConstrainedGroundTruthData):
     def _get_observation(self, idx):
         state = self.idx_to_pos(idx)
         taxi_row, taxi_col, psgr_row, psgr_col, in_taxi, goal_idx = state
-        taxi = TaxiAgent(position=(taxi_row, taxi_col))
+        taxi = TaxiObj(position=(taxi_row, taxi_col))
         passenger = Passenger(position=(psgr_row, psgr_col))
         passenger.color = self.depots[self.depot_names[goal_idx]].color
         passenger.goal = passenger.color
