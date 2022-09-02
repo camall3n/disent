@@ -52,9 +52,9 @@ class TaxiData(ConstrainedGroundTruthData):
         passenger.goal = passenger.color
         passenger.in_taxi = in_taxi
 
-        img_height = (self.env._rows * self.cell_width + (self.env._rows + 1) * self.wall_width +
+        img_height = (self.env.rows * self.cell_width + (self.env.rows + 1) * self.wall_width +
                       sum(self.banner_widths))
-        img_width = (self.env._cols * self.cell_width + (self.env._cols + 1) * self.wall_width +
+        img_width = (self.env.cols * self.cell_width + (self.env.cols + 1) * self.wall_width +
                      sum(self.banner_widths))
 
         dims = {
