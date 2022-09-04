@@ -35,7 +35,7 @@ class TaxiData(ConstrainedGroundTruthData):
     def __init__(self, rgb: bool = True, transform=None):
         self._rgb = rgb
         sensor = SensorChain([
-            NoisySensor(sigma=0.05),
+            NoiseSensor(sigma=0.01),
             ClipSensor(0.0, 1.0),
         ])
         self.env = TaxiEnv(
@@ -83,6 +83,7 @@ class TaxiData84x84(TaxiData):
         return 84, 84, (3 if self._rgb else 1)
 
 class TaxiOracleData(TaxiData):
+
     @property
     def img_shape(self) -> Tuple[int, ...]:
         return 6, 1, 1
