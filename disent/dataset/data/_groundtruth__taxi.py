@@ -6,9 +6,8 @@ from typing import Tuple
 import numpy as np
 
 from disent.dataset.data._groundtruth import ConstrainedGroundTruthData
-from visgrid.envs.taxi import Taxi5x5
-from visgrid.envs.components.passenger import Passenger
-from visgrid.envs.components.agent import Agent as TaxiObj
+from visgrid.envs.taxi import TaxiEnv
+from visgrid.sensors import *
 
 class TaxiData(ConstrainedGroundTruthData):
     """
@@ -20,8 +19,14 @@ class TaxiData(ConstrainedGroundTruthData):
 
     name = 'taxi'
 
-    factor_names = ('taxi_row', 'taxi_col', 'passenger_row', 'passenger_col', 'in_taxi',
-                    'goal_idx')
+    factor_names = (
+        'taxi_row',
+        'taxi_col',
+        'passenger_row',
+        'passenger_col',
+        'in_taxi',
+        'goal_idx',
+    )
 
     @property
     def factor_sizes(self) -> Tuple[int, ...]:
@@ -29,9 +34,20 @@ class TaxiData(ConstrainedGroundTruthData):
 
     def __init__(self, rgb: bool = True, transform=None):
         self._rgb = rgb
-        self.env = Taxi5x5()
-        self.depots = self.env.depots
-        self.depot_names = sorted(list(self.depots.keys()))
+        sensor = SensorChain([
+            NoisySensor(sigma=0.05),
+            ClipSensor(0.0, 1.0),
+        ])
+        self.env = TaxiEnv(
+            size=5,
+            n_passengers=1,
+            exploring_starts=True,
+            terminate_on_goal=False,
+            image_observations=True,
+            sensor=sensor,
+            dimensions=self.dimensions,
+        )
+        self.env.reset()
 
         super().__init__(transform=transform)
 
@@ -45,29 +61,7 @@ class TaxiData(ConstrainedGroundTruthData):
 
     def _get_observation(self, idx):
         state = self.idx_to_pos(idx)
-        taxi_row, taxi_col, psgr_row, psgr_col, in_taxi, goal_idx = state
-        taxi = TaxiObj(position=(taxi_row, taxi_col))
-        passenger = Passenger(position=(psgr_row, psgr_col))
-        passenger.color = self.depots[self.depot_names[goal_idx]].color
-        passenger.goal = passenger.color
-        passenger.in_taxi = in_taxi
-
-        img_height = (self.env.rows * self.cell_width + (self.env.rows + 1) * self.wall_width +
-                      sum(self.banner_widths))
-        img_width = (self.env.cols * self.cell_width + (self.env.cols + 1) * self.wall_width +
-                     sum(self.banner_widths))
-
-        dims = {
-            'wall_width': self.wall_width,
-            'cell_width': self.cell_width,
-            'passenger_width': self.passenger_width,
-            'depot_width': self.depot_width,
-            'banner_widths': self.banner_widths,
-            'dash_widths': self.dash_widths,
-            'img_shape': (img_height, img_width)
-        }
-
-        obs = self.env._render(self.env._grid, taxi, [passenger], self.depots, dims)
+        obs = self.env.get_observation(state)
 
         if (not self._rgb):
             obs = np.mean(obs, axis=-1, keepdims=True)
@@ -75,24 +69,14 @@ class TaxiData(ConstrainedGroundTruthData):
         return obs.astype(np.float32)
 
 class TaxiData64x64(TaxiData):
-    wall_width = 1
-    cell_width = 11
-    passenger_width = 7
-    depot_width = 2
-    banner_widths = (2, 1)
-    dash_widths = (4, 4)
+    dimensions = TaxiEnv.dimensions_64x64
 
     @property
     def img_shape(self) -> Tuple[int, ...]:
         return 64, 64, (3 if self._rgb else 1)
 
 class TaxiData84x84(TaxiData):
-    wall_width = 2
-    cell_width = 13
-    passenger_width = 9
-    depot_width = 3
-    banner_widths = (4, 3)
-    dash_widths = (6, 6)
+    dimensions = TaxiEnv.dimensions_84x84
 
     @property
     def img_shape(self) -> Tuple[int, ...]:
