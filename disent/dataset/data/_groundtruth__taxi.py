@@ -6,8 +6,8 @@ from typing import Tuple
 import numpy as np
 
 from disent.dataset.data._groundtruth import ConstrainedGroundTruthData
+from visgrid.wrappers.transforms import NoiseWrapper, ClipWrapper
 from visgrid.envs.taxi import TaxiEnv
-from visgrid.sensors import *
 
 class TaxiData(ConstrainedGroundTruthData):
     """
@@ -34,19 +34,16 @@ class TaxiData(ConstrainedGroundTruthData):
 
     def __init__(self, rgb: bool = True, transform=None):
         self._rgb = rgb
-        sensor = SensorChain([
-            NoiseSensor(sigma=0.01),
-            ClipSensor(0.0, 1.0),
-        ])
         self.env = TaxiEnv(
             size=5,
             n_passengers=1,
             exploring_starts=True,
             terminate_on_goal=False,
             image_observations=True,
-            sensor=sensor,
             dimensions=self.dimensions,
         )
+        self.env = NoiseWrapper(self.env)
+        self.env = ClipWrapper(self.env)
         self.env.reset()
 
         super().__init__(transform=transform)
@@ -69,21 +66,20 @@ class TaxiData(ConstrainedGroundTruthData):
         return obs.astype(np.float32)
 
 class TaxiData64x64(TaxiData):
-    dimensions = TaxiEnv.dimensions_64x64
+    dimensions = TaxiEnv.dimensions_5x5_to_64x64
 
     @property
     def img_shape(self) -> Tuple[int, ...]:
         return 64, 64, (3 if self._rgb else 1)
 
 class TaxiData84x84(TaxiData):
-    dimensions = TaxiEnv.dimensions_84x84
+    dimensions = TaxiEnv.dimensions_5x5_to_84x84
 
     @property
     def img_shape(self) -> Tuple[int, ...]:
         return 84, 84, (3 if self._rgb else 1)
 
 class TaxiOracleData(TaxiData):
-
     @property
     def img_shape(self) -> Tuple[int, ...]:
         return 6, 1, 1
