@@ -39,7 +39,7 @@ class TaxiData(ConstrainedGroundTruthData):
             n_passengers=1,
             exploring_starts=True,
             terminate_on_goal=False,
-            image_observations=True,
+            should_render=True,
             dimensions=self.dimensions,
         )
         self.env = NoiseWrapper(self.env)
