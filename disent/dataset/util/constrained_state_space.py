@@ -94,18 +94,17 @@ class ConstrainedStateSpace(StateSpace):
             indices = indices[0]
         return indices
 
-
     def idx_to_pos(self, indices) -> np.ndarray:
         """
         Convert constrained index/indices to original index/indices, then apply original
         factor conversion math to obtain position(s)
         """
-        is_list = isinstance(indices, list)
-        if not is_list:
+        is_int = isinstance(indices, int)
+        if is_int:
             indices = [indices]
         orig_indices = [self.valid_orig_indices[idx] for idx in indices]
         positions = super().idx_to_pos(orig_indices)
-        if not is_list:
+        if is_int:
             positions = positions[0]
         return positions
 
@@ -132,13 +131,18 @@ class ConstrainedStateSpace(StateSpace):
             raise NotImplementedError('f_idxs is not supported in constrained state spaces')
             f_sizes = self._factor_sizes[self.normalise_factor_idxs(f_idxs)]  # this may be quite slow, add caching?
         # get resample size
-        if size is not None:
-            # empty np.array(()) gets dtype float which is incompatible with len
-            size = np.append(np.array(size, dtype=int), len(f_sizes))
+        if size is None:
+            shape = (1, )
+        elif isinstance(size, int):
+            shape = (size, )
+        else:
+            shape = size
+        n_samples = shape[0]
+        # empty np.array(()) gets dtype float which is incompatible with len
+        shape = np.append(np.array(shape, dtype=int), len(f_sizes))
+        samples = np.empty(shape, dtype=int)
 
         # oversample for factors so there are likely to be enough valid ones
-        samples = np.empty(size, dtype=int)
-        n_samples = size[0]
         n_valid_samples = 0
         prob_of_valid_sample = self.n_states / self.n_orig_states
 
@@ -163,6 +167,9 @@ class ConstrainedStateSpace(StateSpace):
                     n_valid_samples += 1
                     if n_valid_samples >= n_samples:
                         break
+
+        if size is None:
+            samples = samples[0]
 
         return samples
 
