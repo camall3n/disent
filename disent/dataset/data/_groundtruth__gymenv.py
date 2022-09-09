@@ -36,6 +36,8 @@ class GymEnvData(ConstrainedGroundTruthData):
         return self.env.observation_space.shape
 
     def __init__(self, env, transform=None):
+        if len(env.observation_space.shape) != 3:
+            raise ValueError('Expected an image env. Try wrapping env in ImageFrom1DWrapper.')
         self.env = env
         self.wrappers = list(reversed(self._get_wrapper_chain(env)))
         self.env.reset()
