@@ -37,7 +37,7 @@ class GymEnvData(ConstrainedGroundTruthData):
 
     def __init__(self, env, transform=None):
         self.env = env
-        self.wrappers = reversed(self._get_wrapper_chain(env))
+        self.wrappers = list(reversed(self._get_wrapper_chain(env)))
         self.env.reset()
         self._factor_sizes = self.env.unwrapped.factor_sizes
         self._factor_names = tuple(f'f_{i}' for i in range(len(self._factor_sizes)))
