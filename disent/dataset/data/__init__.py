@@ -44,7 +44,7 @@ from disent.dataset.data._groundtruth import Hdf5GroundTruthData
 
 # groundtruth -- impl
 from disent.dataset.data._groundtruth__cars3d import Cars3dData
-from disent.dataset.data._groundtruth__cars3d import Cars3d64Data  # optimized version of cars3d for 64x64 images
+from disent.dataset.data._groundtruth__cars3d import Cars3d64Data # optimized version of cars3d for 64x64 images
 from disent.dataset.data._groundtruth__dsprites import DSpritesData
 from disent.dataset.data._groundtruth__dsprites_imagenet import DSpritesImagenetData
 from disent.dataset.data._groundtruth__mpi3d import Mpi3dData
@@ -62,5 +62,6 @@ from disent.dataset.data._groundtruth__xysquares import XYSquaresData
 from disent.dataset.data._groundtruth__xysquares import XYSquaresMinimalData
 from disent.dataset.data._groundtruth__xysquares import XYSingleSquareData
 
-# taxi
+# gym envs
+from disent.dataset.data._groundtruth__gymenv import GymEnvData
 from disent.dataset.data._groundtruth__taxi import TaxiData64x64, TaxiData84x84, TaxiOracleData
