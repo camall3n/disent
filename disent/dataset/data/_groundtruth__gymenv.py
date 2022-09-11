@@ -1,9 +1,25 @@
-from typing import Optional
-from typing import Tuple
+from typing import Optional, Protocol, Tuple, runtime_checkable
 
 import numpy as np
+import gym
+from gym.core import ObsType
 
 from disent.dataset.data._groundtruth import ConstrainedGroundTruthData
+
+@runtime_checkable
+class SupportsGymEnvData(Protocol):
+    @property
+    def factor_sizes(self) -> Tuple[int, ...]:
+        raise NotImplementedError
+
+    def set_state(self, pos: Tuple[int, ...]) -> None:
+        raise NotImplementedError
+
+    def is_valid_pos(self, pos: Tuple[int, ...]) -> bool:
+        raise NotImplementedError
+
+    def get_observation(self, pos: Tuple[int, ...]) -> ObsType:
+        raise NotImplementedError
 
 class GymEnvData(ConstrainedGroundTruthData):
     """
@@ -18,7 +34,7 @@ class GymEnvData(ConstrainedGroundTruthData):
         methods:
         - set_state(pos: tuple) -> None
         - is_valid_pos(pos: tuple) -> bool
-        - get_observation(pos: tuple) -> gym.ObsType
+        - _get_observation(pos: tuple) -> ObsType
     """
 
     name = 'gymenv'
@@ -28,18 +44,18 @@ class GymEnvData(ConstrainedGroundTruthData):
         return self._factor_sizes
 
     @property
-    def factor_names(self) -> Tuple[int, ...]:
+    def factor_names(self) -> Tuple[str, ...]:
         return self._factor_names
 
     @property
     def img_shape(self) -> Tuple[int, ...]:
         return self.env.observation_space.shape
 
-    def __init__(self, env, transform=None):
-        if len(env.observation_space.shape) != 3:
-            raise ValueError('Expected an image env. Try wrapping env in ImageFrom1DWrapper.')
+    def __init__(self, env: SupportsGymEnvData, transform=None):
+        assert isinstance(env, gym.Env), 'env must be a Gym environment'
+        assert isinstance(env, SupportsGymEnvData), 'env must implement GymEnvData protocol'
         self.env = env
-        self.wrappers = list(reversed(self._get_wrapper_chain(env)))
+        self.wrappers = self._get_wrapper_chain(env)
         self.env.reset()
         self._factor_sizes = self.env.unwrapped.factor_sizes
         self._factor_names = tuple(f'f_{i}' for i in range(len(self._factor_sizes)))
@@ -56,7 +72,7 @@ class GymEnvData(ConstrainedGroundTruthData):
             if not getattr(env, 'env', False):
                 break
             env = env.env
-        return wrappers
+        return list(reversed(wrappers))
 
     def _get_observation(self, idx):
         state = self.idx_to_pos(idx)
