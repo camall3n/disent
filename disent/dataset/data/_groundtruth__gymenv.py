@@ -31,7 +31,7 @@ class GymEnvData(IteratedGroundTruthData):
     def img_shape(self) -> Tuple[int, ...]:
         return self.env.observation_space.shape
 
-    def __init__(self, env: gym.Env, seed=None, transform=None):
+    def __init__(self, env: gym.Env, seed=None):
         assert isinstance(env, gym.Env), 'env must be a Gym environment'
         self.env = env
         self.set_seed(seed)
@@ -40,7 +40,7 @@ class GymEnvData(IteratedGroundTruthData):
         self._factor_names = tuple(f'f_{i}' for i in range(len(self._factor_sizes)))
         assert len(info['state']) == len(self.factor_sizes)
         assert ob.shape == self.img_shape
-        super().__init__(transform=transform)
+        super().__init__(transform=None)
 
     def __iter__(self):
         return self
