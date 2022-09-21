@@ -37,7 +37,8 @@ from torch.utils.data import IterableDataset
 from torch.utils.data.dataloader import default_collate
 
 from disent.dataset.sampling import BaseDisentSampler
-from disent.dataset.data import GroundTruthData, ConstrainedGroundTruthData
+from disent.dataset.data import BaseGroundTruthData
+from disent.dataset.data._groundtruth import IteratedGroundTruthData
 from disent.dataset.sampling import SingleSampler
 from disent.dataset.wrapper import WrappedDataset
 from disent.util.deprecate import deprecated
@@ -66,7 +67,7 @@ def groundtruth_only(func: T) -> T:
     @wraps(func)
     def wrapper(self: 'DisentDataset', *args, **kwargs):
         if not self.is_ground_truth:
-            raise NotGroundTruthDataError(f'Check `is_ground_truth` first before calling `{func.__name__}`, the dataset wrapped by {repr(self.__class__.__name__)} is not a {repr(GroundTruthData.__name__)} or {repr(ConstrainedGroundTruthData.__name__)}, instead got: {repr(self._dataset)}.')
+            raise NotGroundTruthDataError(f'Check `is_ground_truth` first before calling `{func.__name__}`, the dataset wrapped by {repr(self.__class__.__name__)} is not a {repr(BaseGroundTruthData.__name__)}, instead got: {repr(self._dataset)}.')
         return func(self, *args, **kwargs)
     return wrapper
 
@@ -92,7 +93,7 @@ class DisentDataset(Dataset, LengthIter):
 
     def __init__(
         self,
-        dataset: Union[Dataset, GroundTruthData, ConstrainedGroundTruthData],  # TODO: this should be renamed to data
+        dataset: Union[Dataset, BaseGroundTruthData],  # TODO: this should be renamed to data
         sampler: Optional[BaseDisentSampler] = None,
         transform: Optional[callable] = None,
         augment: Optional[callable] = None,
@@ -118,11 +119,11 @@ class DisentDataset(Dataset, LengthIter):
                 warnings.warn(f'{DisentDataset.__name__} has transform specified as well as wrapped dataset: {dataset}, are you sure this is intended?')
         # check the dataset if we are returning the factors
         if self._return_factors:
-            assert (isinstance(self._dataset, GroundTruthData) or isinstance(self._dataset, ConstrainedGroundTruthData)), f'If `return_factors` is `True`, then the dataset must be an instance of: {GroundTruthData.__name__} or {ConstrainedGroundTruthData.__name__}, got: {type(dataset)}'
+            assert (isinstance(self._dataset, BaseGroundTruthData)), f'If `return_factors` is `True`, then the dataset must be an instance of: {BaseGroundTruthData.__name__}, got: {type(dataset)}'
 
     def shallow_copy(
         self,
-        dataset: Union[Dataset, GroundTruthData, ConstrainedGroundTruthData] =_REF_,  # TODO: this should be renamed to data
+        dataset: Union[Dataset, BaseGroundTruthData] =_REF_,  # TODO: this should be renamed to data
         sampler: Optional[BaseDisentSampler] = _REF_,
         transform: Optional[callable] = _REF_,
         augment: Optional[callable] = _REF_,
@@ -165,18 +166,17 @@ class DisentDataset(Dataset, LengthIter):
 
     @property
     def is_ground_truth(self) -> bool:
-        return (isinstance(self._dataset, GroundTruthData) or
-                isinstance(self._dataset, ConstrainedGroundTruthData))
+        return (isinstance(self._dataset, BaseGroundTruthData))
 
     @property
     @deprecated('ground_truth_data property replaced with `gt_data`')
     @groundtruth_only
-    def ground_truth_data(self) -> Union[GroundTruthData, ConstrainedGroundTruthData]:
+    def ground_truth_data(self) -> BaseGroundTruthData:
         return self._dataset
 
     @property
     @groundtruth_only
-    def gt_data(self) -> Union[GroundTruthData, ConstrainedGroundTruthData]:
+    def gt_data(self) -> BaseGroundTruthData:
         # TODO: deprecate this or the long version
         return self._dataset
 
@@ -193,9 +193,8 @@ class DisentDataset(Dataset, LengthIter):
 
     @property
     def is_wrapped_gt_data(self):
-        return (isinstance(self._dataset, WrappedDataset) and (
-                    isinstance(self._dataset.data, GroundTruthData)
-                    or isinstance(self._dataset.data, ConstrainedGroundTruthData)))
+        return (isinstance(self._dataset, WrappedDataset) and 
+                    isinstance(self._dataset.data, BaseGroundTruthData))
 
     @property
     @wrapped_only
@@ -369,9 +368,12 @@ class DisentDataset(Dataset, LengthIter):
     @groundtruth_only
     def dataset_sample_batch_with_factors(self, num_samples: int, mode: str, collate: bool = True):
         """Sample a batch of observations X and factors Y."""
-        factors = self.gt_data.sample_factors(num_samples)
-        batch = self.dataset_batch_from_factors(factors, mode=mode, collate=collate)
-        return batch, (default_collate(factors) if collate else factors)
+        if isinstance(self.gt_data, IteratedGroundTruthData):
+            return self.gt_data.sample_batch_with_factors(num_samples)
+        else:
+            factors = self.gt_data.sample_factors(num_samples)
+            batch = self.dataset_batch_from_factors(factors, mode=mode, collate=collate)
+            return batch, (default_collate(factors) if collate else factors)
 
 
 class DisentIterDataset(IterableDataset, DisentDataset):

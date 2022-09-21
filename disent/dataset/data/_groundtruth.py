@@ -33,12 +33,12 @@ from typing import Tuple
 from typing import Union
 
 import numpy as np
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, IterableDataset
 
 from disent.dataset.util.datafile import DataFile
 from disent.dataset.util.datafile import DataFileHashedDlH5
 from disent.dataset.data._raw import Hdf5Dataset
-from disent.dataset.util.state_space import StateSpace
+from disent.dataset.util.state_space import StateSpace, IteratedStateSpace
 from disent.dataset.util.constrained_state_space import ConstrainedStateSpace
 from disent.util.inout.paths import ensure_dir_exists
 
@@ -140,7 +140,7 @@ class BaseGroundTruthData(Dataset):
 
 class GroundTruthData(BaseGroundTruthData, StateSpace):
     """
-    Dataset that corresponds to some state space or ground truth factors
+    Map-style dataset that corresponds to some state space or ground truth factors
     """
 
     def state_space_copy(self) -> StateSpace:
@@ -151,6 +151,26 @@ class GroundTruthData(BaseGroundTruthData, StateSpace):
             factor_sizes=self.factor_sizes,
             factor_names=self.factor_names,
         )
+
+# ========================================================================= #
+# interable ground truth data                                               #
+# ========================================================================= #
+
+
+class IteratedGroundTruthData(BaseGroundTruthData, IteratedStateSpace, IterableDataset):
+    """
+    Iterator-style dataset that corresponds to some state space or ground truth factors
+    """
+
+    def state_space_copy(self) -> IteratedStateSpace:
+        """
+        :return: Copy this ground truth dataset as a StateSpace, discarding everything else!
+        """
+        return IteratedStateSpace(
+            factor_sizes=self.factor_sizes,
+            factor_names=self.factor_names,
+        )
+
 
 # ========================================================================= #
 # constrained ground truth data                                             #

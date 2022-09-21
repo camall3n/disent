@@ -36,7 +36,9 @@ from disent.dataset.data._raw import ArrayDataset
 from disent.dataset.data._raw import Hdf5Dataset
 
 # groundtruth -- base
+from disent.dataset.data._groundtruth import BaseGroundTruthData
 from disent.dataset.data._groundtruth import GroundTruthData
+from disent.dataset.data._groundtruth import IteratedGroundTruthData
 from disent.dataset.data._groundtruth import ConstrainedGroundTruthData
 from disent.dataset.data._groundtruth import DiskGroundTruthData
 from disent.dataset.data._groundtruth import NumpyFileGroundTruthData

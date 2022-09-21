@@ -1,42 +1,11 @@
-#  ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
-#  MIT License
-#
-#  Copyright (c) 2021 Nathan Juraj Michlo
-#
-#  Permission is hereby granted, free of charge, to any person obtaining a copy
-#  of this software and associated documentation files (the "Software"), to deal
-#  in the Software without restriction, including without limitation the rights
-#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#  copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included in
-#  all copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-#  SOFTWARE.
-#  ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
-
-from functools import lru_cache
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 from disent.dataset.util.state_space import StateSpace, NonNormalisedFactorIdxs, NonNormalisedFactors
-from disent.util.visualize.vis_util import get_idx_traversal
-
 
 # ========================================================================= #
 # Constrained Space                                                         #
 # ========================================================================= #
-
 
 class ConstrainedStateSpace(StateSpace):
     """
@@ -49,20 +18,16 @@ class ConstrainedStateSpace(StateSpace):
     :param is_valid_fn: callable for checking whether a given position in the state space
                         satisfies the desired constraints.
     """
-
-    def __init__(self,
-                 factor_sizes: Sequence[int],
-                 factor_names: Optional[Sequence[str]] = None):
+    def __init__(self, factor_sizes: Sequence[int], factor_names: Optional[Sequence[str]] = None):
         super().__init__(factor_sizes, factor_names)
         self._constrain_indices() # modifies self.__size
 
     def _constrain_indices(self):
         def is_valid_idx(idx):
             return self._is_valid_pos(super(ConstrainedStateSpace, self).idx_to_pos(idx))
+
         self.valid_orig_indices = [idx for idx in range(len(self)) if is_valid_idx(idx)]
-        self.constrained_indices = {
-            orig: new for new, orig in enumerate(self.valid_orig_indices)
-        }
+        self.constrained_indices = {orig: new for new, orig in enumerate(self.valid_orig_indices)}
         self.n_states = len(self.valid_orig_indices)
         self.n_orig_states = self._size
         self._size = self.n_states
@@ -84,7 +49,7 @@ class ConstrainedStateSpace(StateSpace):
         """
         is_batch = (positions.ndim == 2)
         if not is_batch:
-            positions = np.expand_dims(positions,0)
+            positions = np.expand_dims(positions, 0)
         for pos in positions:
             if not self._is_valid_pos(pos):
                 raise ValueError(f'{pos} is not a valid position in the constrained state space')
@@ -112,7 +77,9 @@ class ConstrainedStateSpace(StateSpace):
     # Sampling Functions - any dim array, only last axis counts!            #
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
-    def sample_factors(self, size=None, f_idxs: Optional[NonNormalisedFactorIdxs] = None) -> np.ndarray:
+    def sample_factors(self,
+                       size=None,
+                       f_idxs: Optional[NonNormalisedFactorIdxs] = None) -> np.ndarray:
         """
         sample randomly from all factors, otherwise the given factor_indices.
         returned values must appear in the same order as factor_indices.
@@ -129,7 +96,8 @@ class ConstrainedStateSpace(StateSpace):
             f_sizes = self._factor_sizes
         else:
             raise NotImplementedError('f_idxs is not supported in constrained state spaces')
-            f_sizes = self._factor_sizes[self.normalise_factor_idxs(f_idxs)]  # this may be quite slow, add caching?
+            f_sizes = self._factor_sizes[self.normalise_factor_idxs(
+                f_idxs)] # this may be quite slow, add caching?
         # get resample size
         if size is None:
             shape = (1, )
@@ -173,31 +141,19 @@ class ConstrainedStateSpace(StateSpace):
 
         return samples
 
-    def sample_missing_factors(self, known_factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
+    def sample_missing_factors(self, *args, **kwargs) -> np.ndarray:
         raise NotImplementedError('sample_missing_factors not supported for ConstrainedStateSpace')
-    def resample_other_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
+
+    def resample_other_factors(self, *args, **kwargs) -> np.ndarray:
         raise NotImplementedError('resample_other_factors not supported for ConstrainedStateSpace')
-    def resample_given_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs):
+
+    def resample_given_factors(self, *args, **kwargs):
         raise NotImplementedError('resample_given_factors not supported for ConstrainedStateSpace')
 
-    def sample_random_factor_traversal(
-        self,
-        f_idx: Optional[int] = None,
-        base_factors: Optional[NonNormalisedFactors] = None,
-        num: Optional[int] = None,
-        mode: str = 'interval',
-        start_index: int = 0,
-        return_indices: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-        raise NotImplementedError(f'sample_random_factor_traversal not implemented for constrained state spaces')
+    def sample_random_factor_traversal(self, *args, **kwargs):
+        raise NotImplementedError(
+            f'sample_random_factor_traversal not implemented for ConstrainedStateSpace')
 
-
-    def sample_random_factor_traversal_grid(
-        self,
-        num: Optional[int] = None,
-        base_factors: Optional[NonNormalisedFactors] = None,
-        mode: str = 'interval',
-        factor_indices: Optional[NonNormalisedFactorIdxs] = None,
-        return_indices: bool = False,
-    ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-        raise NotImplementedError(f'sample_random_factor_traversal_grid not implemented for constrained state spaces')
+    def sample_random_factor_traversal_grid(self, *args, **kwargs):
+        raise NotImplementedError(
+            f'sample_random_factor_traversal_grid not implemented for ConstrainedStateSpace')

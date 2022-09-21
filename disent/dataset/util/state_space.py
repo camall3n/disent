@@ -32,28 +32,23 @@ import numpy as np
 from disent.util.iters import LengthIter
 from disent.util.visualize.vis_util import get_idx_traversal
 
-
 # ========================================================================= #
 # Types                                                                     #
 # ========================================================================= #
 
-
-NonNormalisedFactorIdx  = Union[Sequence[Union[int, str]], Union[int, str]]
+NonNormalisedFactorIdx = Union[Sequence[Union[int, str]], Union[int, str]]
 NonNormalisedFactorIdxs = Union[Sequence[NonNormalisedFactorIdx], NonNormalisedFactorIdx]
-NonNormalisedFactors    = Union[np.ndarray, Sequence[Union[int, Sequence]]]
-
+NonNormalisedFactors = Union[np.ndarray, Sequence[Union[int, Sequence]]]
 
 # ========================================================================= #
 # Basic State Space                                                         #
 # ========================================================================= #
 
-
-class StateSpace(LengthIter):
+class BaseStateSpace:
     """
     State space where an index corresponds to coordinates (factors/positions) in the factor space.
     ie. State space with multiple factors of variation, where each factor can be a different size.
     """
-
     def __init__(self, factor_sizes: Sequence[int], factor_names: Optional[Sequence[str]] = None):
         super().__init__()
         # dimension: [read only]
@@ -61,26 +56,25 @@ class StateSpace(LengthIter):
         self._factor_sizes.flags.writeable = False
         # checks
         if self._factor_sizes.ndim != 1:
-            raise ValueError(f'`factor_sizes` must be an array with only one dimension, got shape: {self._factor_sizes.shape}')
+            raise ValueError(
+                f'`factor_sizes` must be an array with only one dimension, got shape: {self._factor_sizes.shape}'
+            )
         if len(self._factor_sizes) <= 0:
-            raise ValueError(f'`factor_sizes` must be non-empty, got shape: {self._factor_sizes.shape}')
+            raise ValueError(
+                f'`factor_sizes` must be non-empty, got shape: {self._factor_sizes.shape}')
         # multipliers: [read only]
         self.__factor_multipliers = _dims_multipliers(self._factor_sizes)
         self.__factor_multipliers.flags.writeable = False
         # total permutations
         self._size = int(np.prod(factor_sizes))
         # factor names
-        self.__factor_names = tuple(f'f{i}' for i in range(self.num_factors)) if (factor_names is None) else tuple(factor_names)
+        self.__factor_names = tuple(
+            f'f{i}'
+            for i in range(self.num_factors)) if (factor_names is None) else tuple(factor_names)
         if len(self.__factor_names) != len(self._factor_sizes):
-            raise ValueError(f'Dimensionality mismatch of factor_names and factor_sizes: len({self.__factor_names}) != len({tuple(self._factor_sizes)})')
-
-    def __len__(self):
-        """Same as self.size"""
-        return self.size
-
-    def __getitem__(self, idx):
-        """Data returned based on the idx"""
-        return self.idx_to_pos(idx)
+            raise ValueError(
+                f'Dimensionality mismatch of factor_names and factor_sizes: len({self.__factor_names}) != len({tuple(self._factor_sizes)})'
+            )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Properties                                                            #
@@ -131,7 +125,8 @@ class StateSpace(LengthIter):
             try:
                 f_idx = self.factor_names.index(factor)
             except:
-                raise KeyError(f'invalid factor name: {repr(factor)} must be one of: {self.factor_names}')
+                raise KeyError(
+                    f'invalid factor name: {repr(factor)} must be one of: {self.factor_names}')
         else:
             f_idx = int(factor)
         # check that the values are correct
@@ -162,32 +157,6 @@ class StateSpace(LengthIter):
         return np.where(f_mask)[0]
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    # Coordinate Transform - any dim array, only last axis counts!          #
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-
-    def pos_to_idx(self, positions) -> np.ndarray:
-        """
-        Convert a position to an index (or convert a list of positions to a list of indices)
-        - positions are lists of integers, with each element < their corresponding factor size
-        - indices are integers < size
-
-        TODO: can factor_multipliers be used to speed this up?
-        """
-        positions = np.moveaxis(positions, source=-1, destination=0)
-        return np.ravel_multi_index(positions, self._factor_sizes)
-
-    def idx_to_pos(self, indices) -> np.ndarray:
-        """
-        Convert an index to a position (or convert a list of indices to a list of positions)
-        - indices are integers < size
-        - positions are lists of integers, with each element < their corresponding factor size
-
-        TODO: can factor_multipliers be used to speed this up?
-        """
-        positions = np.array(np.unravel_index(indices, self._factor_sizes))
-        return np.moveaxis(positions, source=0, destination=-1)
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     # Iterators                                                             #
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
@@ -202,10 +171,9 @@ class StateSpace(LengthIter):
     # Sampling Functions - any dim array, only last axis counts!            #
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
-    def sample_indices(self, size=None):
-        return np.random.randint(0, len(self), size=size)
-
-    def sample_factors(self, size=None, f_idxs: Optional[NonNormalisedFactorIdxs] = None) -> np.ndarray:
+    def sample_factors(self,
+                       size=None,
+                       f_idxs: Optional[NonNormalisedFactorIdxs] = None) -> np.ndarray:
         """
         sample randomly from all factors, otherwise the given factor_indices.
         returned values must appear in the same order as factor_indices.
@@ -219,7 +187,8 @@ class StateSpace(LengthIter):
         if f_idxs is None:
             f_sizes = self._factor_sizes
         else:
-            f_sizes = self._factor_sizes[self.normalise_factor_idxs(f_idxs)]  # this may be quite slow, add caching?
+            f_sizes = self._factor_sizes[self.normalise_factor_idxs(
+                f_idxs)] # this may be quite slow, add caching?
         # get resample size
         if size is not None:
             # empty np.array(()) gets dtype float which is incompatible with len
@@ -227,7 +196,8 @@ class StateSpace(LengthIter):
         # sample for factors
         return np.random.randint(0, f_sizes, size=size)
 
-    def sample_missing_factors(self, known_factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
+    def sample_missing_factors(self, known_factors: NonNormalisedFactors,
+                               f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
         """
         Samples the remaining factors not given in the known_factor_indices.
         ie. fills in the missing values by sampling from the unused dimensions.
@@ -253,21 +223,26 @@ class StateSpace(LengthIter):
         known_factors = np.array(known_factors)
         # checks
         assert known_factors.ndim >= 1, f'known_factors must have at least one dimension, got shape: {known_factors.shape}'
-        assert known_factors.shape[-1] == len(f_idxs), f'last dimension of factors must be the same size as the number of f_idxs ({len(f_idxs)}), got shape: {known_factors.shape}'
+        assert known_factors.shape[-1] == len(
+            f_idxs
+        ), f'last dimension of factors must be the same size as the number of f_idxs ({len(f_idxs)}), got shape: {known_factors.shape}'
         # replace the specified factors
         new_factors = np.empty([*known_factors.shape[:-1], self.num_factors], dtype='int')
         new_factors[..., f_idxs] = known_factors
-        new_factors[..., f_idxs_inv] = self.sample_factors(size=known_factors.shape[:-1], f_idxs=f_idxs_inv)
+        new_factors[..., f_idxs_inv] = self.sample_factors(size=known_factors.shape[:-1],
+                                                           f_idxs=f_idxs_inv)
         # done!
         return new_factors
 
-    def resample_other_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
+    def resample_other_factors(self, factors: NonNormalisedFactors,
+                               f_idxs: NonNormalisedFactorIdxs) -> np.ndarray:
         """
         Resample all unspecified factors, keeping f_idxs constant.
         """
         return self.resample_given_factors(factors=factors, f_idxs=self.invert_factor_idxs(f_idxs))
 
-    def resample_given_factors(self, factors: NonNormalisedFactors, f_idxs: NonNormalisedFactorIdxs):
+    def resample_given_factors(self, factors: NonNormalisedFactors,
+                               f_idxs: NonNormalisedFactorIdxs):
         """
         Resample all specified f_idxs, keeping all remaining factors constant.
         """
@@ -275,7 +250,8 @@ class StateSpace(LengthIter):
         new_factors = np.copy(factors)
         # checks
         assert new_factors.ndim >= 1, f'factors must have at least one dimension, got shape: {new_factors.shape}'
-        assert new_factors.shape[-1] == self.num_factors, f'last dimension of factors must be the same size as the number of factors ({self.num_factors}), got shape: {new_factors.shape}'
+        assert new_factors.shape[
+            -1] == self.num_factors, f'last dimension of factors must be the same size as the number of factors ({self.num_factors}), got shape: {new_factors.shape}'
         # replace the specified factors
         new_factors[..., f_idxs] = self.sample_factors(size=new_factors.shape[:-1], f_idxs=f_idxs)
         # done!
@@ -324,9 +300,14 @@ class StateSpace(LengthIter):
         Sample a single random factor traversal along the
         given factor index, starting from some random base sample.
         """
-        f_idx, base_factors, num = self._get_f_idx_and_factors_and_size(f_idx=f_idx, base_factors=base_factors, num=num)
+        f_idx, base_factors, num = self._get_f_idx_and_factors_and_size(f_idx=f_idx,
+                                                                        base_factors=base_factors,
+                                                                        num=num)
         # generate traversal
-        base_factors[:, f_idx] = get_idx_traversal(self.factor_sizes[f_idx], num_frames=num, mode=mode, start_index=start_index)
+        base_factors[:, f_idx] = get_idx_traversal(self.factor_sizes[f_idx],
+                                                   num_frames=num,
+                                                   mode=mode,
+                                                   start_index=start_index)
         # return factors (num_frames, num_factors)
         if return_indices:
             return base_factors, self.pos_to_idx(base_factors)
@@ -349,18 +330,67 @@ class StateSpace(LengthIter):
         # generate a grid of factors
         factors_grid = []
         for f_idx in factor_indices:
-            factors_grid.append(self.sample_random_factor_traversal(f_idx=f_idx, base_factors=base_factors, num=num, mode=mode, start_index=0))
+            factors_grid.append(
+                self.sample_random_factor_traversal(f_idx=f_idx,
+                                                    base_factors=base_factors,
+                                                    num=num,
+                                                    mode=mode,
+                                                    start_index=0))
         factors_grid = np.stack(factors_grid, axis=0)
         # done!
         if return_indices:
             return factors_grid, self.pos_to_idx(factors_grid)
         return factors_grid
 
+class StateSpace(BaseStateSpace, LengthIter):
+    def __len__(self):
+        """Same as self.size"""
+        return self.size
+
+    def __getitem__(self, idx):
+        """Data returned based on the idx"""
+        return self.idx_to_pos(idx)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    # Coordinate Transform - any dim array, only last axis counts!          #
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+
+    def pos_to_idx(self, positions) -> np.ndarray:
+        """
+        Convert a position to an index (or convert a list of positions to a list of indices)
+        - positions are lists of integers, with each element < their corresponding factor size
+        - indices are integers < size
+
+        TODO: can factor_multipliers be used to speed this up?
+        """
+        positions = np.moveaxis(positions, source=-1, destination=0)
+        return np.ravel_multi_index(positions, self._factor_sizes)
+
+    def idx_to_pos(self, indices) -> np.ndarray:
+        """
+        Convert an index to a position (or convert a list of indices to a list of positions)
+        - indices are integers < size
+        - positions are lists of integers, with each element < their corresponding factor size
+
+        TODO: can factor_multipliers be used to speed this up?
+        """
+        positions = np.array(np.unravel_index(indices, self._factor_sizes))
+        return np.moveaxis(positions, source=0, destination=-1)
+
+    def sample_indices(self, size=None):
+        return np.random.randint(0, len(self), size=size)
+
+# ========================================================================= #
+# Iterated State Space                                                      #
+# ========================================================================= #
+
+class IteratedStateSpace(BaseStateSpace):
+    def __iter__(self):
+        raise NotImplementedError
 
 # ========================================================================= #
 # Hidden State Space                                                        #
 # ========================================================================= #
-
 
 @lru_cache()
 def _get_step_size(factor_sizes, f_idx: int):
@@ -374,12 +404,10 @@ def _get_step_size(factor_sizes, f_idx: int):
     pos[f_idx] = 1
     return int(np.ravel_multi_index(pos, factor_sizes))
 
-
 def _dims_multipliers(factor_sizes: np.ndarray) -> np.ndarray:
     factor_sizes = np.array(factor_sizes)
     assert factor_sizes.ndim == 1
     return np.append(np.cumprod(factor_sizes[::-1])[::-1], 1)
-
 
 # @try_njit
 # def _idx_to_pos(idxs, dims_mul):
@@ -388,11 +416,9 @@ def _dims_multipliers(factor_sizes: np.ndarray) -> np.ndarray:
 #     factors //= dims_mul[1:]
 #     return factors
 
-
 # ========================================================================= #
 # Hidden State Space                                                        #
 # ========================================================================= #
-
 
 # class HiddenStateSpace(_BaseStateSpace):
 #
@@ -461,7 +487,6 @@ def _dims_multipliers(factor_sizes: np.ndarray) -> np.ndarray:
 #             factors,
 #             self._known_factor_indices[fixed_factor_indices]
 #         )
-
 
 # ========================================================================= #
 # Hidden State Space                                                        #

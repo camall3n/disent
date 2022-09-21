@@ -6,7 +6,6 @@ import torch
 from torch.utils.data import DataLoader
 
 from disent.dataset import DisentDataset
-from disent.dataset.data import XYObjectData
 from disent.dataset.data import TaxiData64x64, TaxiData84x84, TaxiOracleData
 from disent.dataset.sampling import SingleSampler
 from disent.dataset.transform import ToImgTensorF32
