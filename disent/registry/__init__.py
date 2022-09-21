@@ -173,6 +173,7 @@ OPTIMIZERS['adagrad']     = LazyImport(lr=_LR, import_path='torch.optim.adagrad.
 OPTIMIZERS['adam']        = LazyImport(lr=_LR, import_path='torch.optim.adam.Adam')
 OPTIMIZERS['adamax']      = LazyImport(lr=_LR, import_path='torch.optim.adamax.Adamax')
 OPTIMIZERS['adam_w']      = LazyImport(lr=_LR, import_path='torch.optim.adamw.AdamW')
+OPTIMIZERS['adamw']       = LazyImport(lr=_LR, import_path='torch.optim.adamw.AdamW')
 OPTIMIZERS['asgd']        = LazyImport(lr=_LR, import_path='torch.optim.asgd.ASGD')
 OPTIMIZERS['lbfgs']       = LazyImport(lr=_LR, import_path='torch.optim.lbfgs.LBFGS')
 OPTIMIZERS['rmsprop']     = LazyImport(lr=_LR, import_path='torch.optim.rmsprop.RMSprop')
