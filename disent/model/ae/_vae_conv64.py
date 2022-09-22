@@ -22,6 +22,8 @@
 #  SOFTWARE.
 #  ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~
 
+from typing import Tuple
+
 from torch import nn
 from torch import Tensor
 
@@ -56,6 +58,10 @@ class EncoderConv64(DisentEncoder):
     """
 
     def __init__(self, x_shape=(3, 64, 64), z_size=6, z_multiplier=1):
+        """
+        z_multiplier is how many outputs per code variable
+        (use z_multiplier=2 for gaussian mean / standard deviation)
+        """
         # checks
         (C, H, W) = x_shape
         assert (H, W) == (64, 64), 'This model only works with image size 64x64.'
@@ -71,7 +77,7 @@ class EncoderConv64(DisentEncoder):
             nn.Linear(in_features=256,  out_features=self.z_total),  # we combine the two networks in the reference implementation and use torch.chunk(2, dim=-1) to get mu & logvar
         )
 
-    def encode(self, x) -> (Tensor, Tensor):
+    def encode(self, x) -> Tuple[Tensor, Tensor]:
         return self.model(x)
 
 
