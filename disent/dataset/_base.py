@@ -193,7 +193,7 @@ class DisentDataset(Dataset, LengthIter):
 
     @property
     def is_wrapped_gt_data(self):
-        return (isinstance(self._dataset, WrappedDataset) and 
+        return (isinstance(self._dataset, WrappedDataset) and
                     isinstance(self._dataset.data, BaseGroundTruthData))
 
     @property
@@ -384,11 +384,23 @@ class DisentIterDataset(IterableDataset, DisentDataset):
     def __iter__(self):
         # this takes priority over __getitem__, otherwise __getitem__ would need to
         # raise an IndexError if out of bounds to signal the end of iteration
+        dataset_iter = iter(self._dataset)
         while True:
-            # yield the entire dataset
-            # - repeating when it is done!
-            yield from (self[i] for i in range(len(self._dataset)))
+            x_raw = next(dataset_iter)
+            # To emulate the map-style dataset, we need to form a tuple for every
+            # sampled datapoint (see dataset_get):
+            x_targ = self._datapoint_raw_to_target(x_raw) # applies self.transform
+            # >>> x = self._datapoint_target_to_input(x_targ) # applies self.augment
+            # >>> x_tuple = (x, x_targ)
 
+            # Then we zip up the results for each index (but there's only one index),
+            # extract the x_targ, and wrap it in a dict (see _dataset_get_observation)
+            # >>> _, xs_targ = zip(*(x_tuple for _ in range(1)))
+            # result = {'x_targ': xs_targ}
+            #
+            # Or alternatively, we can just wrap x_targ in a tuple...
+            result = {'x_targ': (x_targ,)}
+            yield result
 
 # ========================================================================= #
 # util                                                                      #
