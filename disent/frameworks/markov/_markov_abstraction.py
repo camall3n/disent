@@ -4,10 +4,10 @@ import os
 import platform
 import torch
 
-from factored_rl.models.nnutils import Network
+from factored_rl.models.nnutils import Module
 from factored_rl.models.markov.featurenet import FeatureNet
 
-class MarkovAbstraction(Network):
+class MarkovAbstraction(Module):
     def __init__(self, x_shape):
         super().__init__()
         assert x_shape == (3, 84, 84)

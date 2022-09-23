@@ -4,11 +4,11 @@ import os
 import platform
 import torch
 
-from factored_rl.models.nnutils import Network
+from factored_rl.models.nnutils import Module
 from factored_rl.models.factored.cae import CAENet
 from ..markov import MarkovAbstraction
 
-class FactoredModel(Network):
+class FactoredModel(Module):
     def __init__(self, x_shape, seed, tag):
         super().__init__()
 
