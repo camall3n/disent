@@ -389,7 +389,7 @@ class DisentIterDataset(IterableDataset, DisentDataset):
             x_raw = next(dataset_iter)
             # To emulate the map-style dataset, we need to form a tuple for every
             # sampled datapoint (see dataset_get):
-            x_targ = self._datapoint_raw_to_target(x_raw) # applies self.transform
+            # x_targ = self._datapoint_raw_to_target(x_raw) # applies transform
             # >>> x = self._datapoint_target_to_input(x_targ) # applies self.augment
             # >>> x_tuple = (x, x_targ)
 
@@ -398,8 +398,8 @@ class DisentIterDataset(IterableDataset, DisentDataset):
             # >>> _, xs_targ = zip(*(x_tuple for _ in range(1)))
             # result = {'x_targ': xs_targ}
             #
-            # Or alternatively, we can just wrap x_targ in a tuple...
-            result = {'x_targ': (x_targ,)}
+            # Or if the dataset handles the transform, just wrap x_raw in a tuple...
+            result = {'x_targ': (x_raw,)}
             yield result
 
 # ========================================================================= #
