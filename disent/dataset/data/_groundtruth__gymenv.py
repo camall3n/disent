@@ -51,8 +51,11 @@ class GymEnvData(IteratedGroundTruthData):
             x = self._transform(x)
         return x
 
+    def get_worker_init_fn(self):
+        return self._worker_init_fn
+
     @staticmethod
-    def worker_init_fn(worker_id):
+    def _worker_init_fn(worker_id):
         worker_info = torch.utils.data.get_worker_info()
         dataset = worker_info.dataset # the dataset copy in this worker process
         offset = 1000 # maximum number of seeds ever expected per trial

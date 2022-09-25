@@ -402,6 +402,9 @@ class DisentIterDataset(IterableDataset, DisentDataset):
             result = {'x_targ': (x_raw,)}
             yield result
 
+    def get_worker_init_fn(self):
+        return self._dataset.get_worker_init_fn()
+
 # ========================================================================= #
 # util                                                                      #
 # ========================================================================= #
