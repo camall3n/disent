@@ -1,4 +1,5 @@
-from typing import Tuple
+from typing import Tuple, Optional
+import warnings
 
 import numpy as np
 import gym
@@ -31,11 +32,25 @@ class GymEnvData(IteratedGroundTruthData):
     def img_shape(self) -> Tuple[int, ...]:
         return self.env.observation_space.shape
 
-    def __init__(self, env: gym.Env, seed=None, transform=None):
+    def __init__(self,
+                 env: gym.Env,
+                 seed: Optional[int] = None,
+                 transform: callable = None,
+                 sample_mode: Optional[str] = 'observations'):
         assert isinstance(env, gym.Env), 'env must be a Gym environment'
         self.env = env
         self.set_seed(seed)
         ob, info = self.env.reset(seed=seed)
+        valid_modes = ['states', 'observations', 'transitions']
+        if sample_mode is None:
+            sample_mode = 'observations'
+        if sample_mode not in valid_modes:
+            raise ValueError(
+                f"sample_mode must be in {valid_modes} but sample_mode was {repr(sample_mode)}")
+        if sample_mode == 'states':
+            warnings.warn("Note: sample_mode 'states' is just an alias for 'observations'.")
+            sample_mode = 'observations'
+        self.sample_mode = sample_mode
         self._factor_sizes = self.env.unwrapped.factor_sizes
         self._factor_names = tuple(f'f_{i}' for i in range(len(self._factor_sizes)))
         assert len(info['state']) == len(self.factor_sizes)
@@ -46,9 +61,12 @@ class GymEnvData(IteratedGroundTruthData):
         return self
 
     def __next__(self):
-        x = self.get_ob_state_pair()[0]
-        if self._transform is not None:
-            x = self._transform(x)
+        if self.sample_mode == 'observations':
+            x = self.get_ob_state_pair()[0]
+            if self._transform is not None:
+                x = self._transform(x)
+        elif self.sample_mode == 'transitions':
+            x = self.get_ob_transition_pair()[0]
         return x
 
     def get_worker_init_fn(self):
@@ -75,6 +93,30 @@ class GymEnvData(IteratedGroundTruthData):
     def get_ob_state_pair(self):
         ob, info = self.env.reset()
         return ob, info['state']
+
+    def get_ob_transition_pair(self):
+        ob, info = self.env.reset()
+        action = self.env.action_space.sample()
+        next_ob, reward, terminal, truncated, next_info = self.env.step(action)
+        state = info['state']
+        next_state = next_info['state']
+        ob_transition = {
+            'ob': ob,
+            'action': action,
+            'reward': reward,
+            'terminal': terminal,
+            'truncated': truncated,
+            'next_ob': next_ob,
+        }
+        state_transition = {
+            'state': state,
+            'action': action,
+            'reward': reward,
+            'terminal': terminal,
+            'truncated': truncated,
+            'next_state': next_state,
+        }
+        return ob_transition, state_transition
 
     def get_batch(self, batch_size: int):
         return self.sample_batch_with_factors(num_samples=batch_size)
