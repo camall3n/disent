@@ -87,7 +87,7 @@ class GymEnvData(IteratedGroundTruthData):
             ob_samples.append(ob)
             factor_samples.append(state)
 
-        batch = torch.stack(ob_samples)
+        batch = np.stack(ob_samples)
         factors = np.stack(factor_samples)
         return batch, factors
 
