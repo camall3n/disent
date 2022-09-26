@@ -36,21 +36,17 @@ class GymEnvData(IteratedGroundTruthData):
                  env: gym.Env,
                  seed: Optional[int] = None,
                  transform: callable = None,
-                 sample_mode: Optional[str] = 'observations'):
+                 action_sampling: Optional[str] = None):
         assert isinstance(env, gym.Env), 'env must be a Gym environment'
         self.env = env
         self.set_seed(seed)
         ob, info = self.env.reset(seed=seed)
-        valid_modes = ['states', 'observations', 'transitions']
-        if sample_mode is None:
-            sample_mode = 'observations'
-        if sample_mode not in valid_modes:
+        action_sampling_modes = ['all', 'valid']
+        if action_sampling is not None and action_sampling not in action_sampling_modes:
             raise ValueError(
-                f"sample_mode must be in {valid_modes} but sample_mode was {repr(sample_mode)}")
-        if sample_mode == 'states':
-            warnings.warn("Note: sample_mode 'states' is just an alias for 'observations'.")
-            sample_mode = 'observations'
-        self.sample_mode = sample_mode
+                f"sample_mode must be in {action_sampling_modes} but sample_mode was {repr(action_sampling)}"
+            )
+        self.action_sampling = action_sampling
         self._factor_sizes = self.env.unwrapped.factor_sizes
         self._factor_names = tuple(f'f_{i}' for i in range(len(self._factor_sizes)))
         assert len(info['state']) == len(self.factor_sizes)
@@ -61,11 +57,11 @@ class GymEnvData(IteratedGroundTruthData):
         return self
 
     def __next__(self):
-        if self.sample_mode == 'observations':
+        if self.action_sampling is None:
             x = self.get_ob_state_pair()[0]
             if self._transform is not None:
                 x = self._transform(x)
-        elif self.sample_mode == 'transitions':
+        else:
             x = self.get_ob_transition_pair()[0]
         return x
 
@@ -96,7 +92,8 @@ class GymEnvData(IteratedGroundTruthData):
 
     def get_ob_transition_pair(self):
         ob, info = self.env.reset()
-        action = self.env.action_space.sample()
+        action_mask = info['action_mask'] if self.action_sampling == 'valid' else None
+        action = self.env.action_space.sample(mask=action_mask)
         next_ob, reward, terminal, truncated, next_info = self.env.step(action)
         state = info['state']
         next_state = next_info['state']
