@@ -99,11 +99,13 @@ class GymEnvData(IteratedGroundTruthData):
         next_state = next_info['state']
         ob_transition = {
             'ob': ob,
+            'state': state,
             'action': action,
             'reward': reward,
             'terminal': terminal,
             'truncated': truncated,
             'next_ob': next_ob,
+            'next_state': next_state,
         }
         state_transition = {
             'state': state,
